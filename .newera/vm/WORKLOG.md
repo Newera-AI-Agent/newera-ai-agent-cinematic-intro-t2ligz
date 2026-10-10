@@ -61,3 +61,7 @@ Durable session memory for this VM job chain. Each line is one step or wind-down
 - [2026-10-10T10:56:10.781Z | VM 2/3] CONTRACT REQ-020 -> complete: reference/frames/ contains 167 JPEGs (one per 1.0 second of 166.46s runtime), width 960, quality q:v 3. Verified by file count and ffprobe metadata.
 - [2026-10-10T10:59:42.136Z | VM 2/3] VERIFIED green: npm run build 2>&1
 - [2026-10-10T11:46:10.289Z | VM 2/3] RELAY checkpoint at step 92 — handoff committed, VM 3 continues.
+- [2026-10-10T11:46:30.216Z | VM 3/3] boot: VM 3/3 online (job vm-mv2bw6v9-wvoxoraq, 90 min budget, relay continuation)
+- [2026-10-10T11:46:30.217Z | VM 3/3] self-check PASS: shell: VERIFIED (the harness executed bash on this VM at boot); node: v24.21.0; npm: 11.19.0; python3: Python 3.12.3; git: repo checked out @ f377da6; filesystem: WRITABLE (the harness wrote + read back a probe file); skills: 23 knowledge docs in .newera/skills/ (list_skills / read_skill); project: 
+- [2026-10-10T11:46:38.159Z | VM 3/3] boot auto-setup: npm install --no-audit --no-fund ok
+- [2026-10-10T11:56:08.524Z | VM 3/3] ABORT (protocol violations x3) at step 6 — handoff written for resume.
