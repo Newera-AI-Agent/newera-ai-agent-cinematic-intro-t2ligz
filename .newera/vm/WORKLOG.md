@@ -80,3 +80,9 @@ Durable session memory for this VM job chain. Each line is one step or wind-down
 - [2026-10-10T12:46:34.964Z | VM 1/3] boot auto-setup: npm install --no-audit --no-fund ok
 - [2026-10-10T13:02:53.489Z | VM 1/3] VERIFIED green: npm run build
 - [2026-10-10T13:09:37.824Z | VM 1/3] DEADLINE reached at step 36 — handoff written for the next VM or an explicit resume.
+- [2026-10-10T13:13:51.965Z | VM 1/3] boot: VM 1/3 online (job vm-mv2f0iwn-pt76ey95, 180 min budget)
+- [2026-10-10T13:13:51.965Z | VM 1/3] self-check PASS: shell: VERIFIED (the harness executed bash on this VM at boot); node: v24.21.0; npm: 11.19.0; python3: Python 3.12.3; git: repo checked out @ f223b7c; filesystem: WRITABLE (the harness wrote + read back a probe file); skills: 23 knowledge docs in .newera/skills/ (list_skills / read_skill); project: 
+- [2026-10-10T13:13:59.020Z | VM 1/3] boot auto-setup: npm install --no-audit --no-fund ok
+- [2026-10-10T13:15:59.830Z | VM 1/3] VERIFIED green: git log --oneline -3 && ls -la public/newera-intro-1080p.mp4 && npm run build 2>&1 | tail -5
+- [2026-10-10T13:47:36.440Z | VM 1/3] VERIFIED green: git log --oneline -3 && echo '---' && npm run build 2>&1 | tail -5
+- [2026-10-10T15:32:13.971Z | VM 1/3] ABORT (protocol violations x3) at step 71 — handoff written for resume.

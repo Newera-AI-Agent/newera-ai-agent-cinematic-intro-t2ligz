@@ -1,3 +1,3 @@
 # VM Agent Result
 
-TIME LIMIT REACHED after 36 steps. All work so far is committed to the repo and packaged in the artifact; the handoff at .newera/vm/handoff.md carries the continuation plan.
+ABORTED: model kept replying outside the JSON protocol after 71 steps (handoff committed for resume).
