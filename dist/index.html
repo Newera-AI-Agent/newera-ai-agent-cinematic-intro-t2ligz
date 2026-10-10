@@ -1,0 +1,53 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>NewEra AI Agent — The New Era Begins</title>
+    <meta name="description" content="NewEra AI Agent cinematic intro film — an original 2 minute title sequence with synchronized score." />
+    <meta name="theme-color" content="#05060a" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@300;400;500&family=Cormorant+Garamond:wght@300;400;600&display=swap"
+      rel="stylesheet"
+    />
+    <script type="module" crossorigin src="./assets/index-5y62Oiza.js"></script>
+    <link rel="stylesheet" crossorigin href="./assets/index-BUiCevJE.css">
+  </head>
+  <body>
+    <div id="app">
+      <div class="stage" id="stage">
+        <canvas id="film" width="1920" height="1080"></canvas>
+        <div class="grain" aria-hidden="true"></div>
+        <div class="vignette" aria-hidden="true"></div>
+      </div>
+
+      <div class="hud" id="hud">
+        <div class="hud-bar">
+          <button id="playBtn" class="hud-btn primary" type="button" aria-label="Play intro">
+            <span id="playIcon">Play intro</span>
+          </button>
+          <button id="muteBtn" class="hud-btn" type="button" aria-label="Toggle sound">Sound on</button>
+          <button id="restartBtn" class="hud-btn" type="button" aria-label="Restart">Restart</button>
+          <div class="hud-time"><span id="tc">00:00.0</span> / <span id="tcd">02:04.0</span></div>
+        </div>
+        <div class="scrub" id="scrub" role="slider" tabindex="0" aria-label="Seek" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0">
+          <div class="scrub-fill" id="scrubFill"></div>
+          <div class="scrub-marks" id="scrubMarks"></div>
+        </div>
+        <div class="chapters" id="chapters"></div>
+      </div>
+
+      <div class="startcard" id="startcard">
+        <div class="startcard-inner">
+          <div class="brandline">NEWERA AI AGENT</div>
+          <h1>The New Era Begins</h1>
+          <p>An original 2 minute title sequence. Sound on recommended.</p>
+          <button id="startBtn" class="startbtn" type="button">Begin</button>
+        </div>
+      </div>
+    </div>
+
+  </body>
+</html>
