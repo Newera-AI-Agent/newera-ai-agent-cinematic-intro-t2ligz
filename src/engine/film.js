@@ -10,6 +10,10 @@
  */
 
 import { mulberry32 } from './audio.js';
+import {
+  montage, cutFlash, smear, planeField,
+  shotTerminal, shotEditor, shotDom, shotAgents, shotTests, shotDeploy, shotProduct
+} from './sim.js';
 
 export const WIDTH = 1920;
 export const HEIGHT = 1080;
@@ -42,13 +46,13 @@ const AURORA = '#7be0c8';
  * Small deterministic helpers
  * ------------------------------------------------------------------ */
 
-const clamp = (v, a, b) => (v < a ? a : v > b ? b : v);
-const lerp = (a, b, t) => a + (b - a) * t;
-const easeOut = (t) => 1 - Math.pow(1 - clamp(t, 0, 1), 3);
-const easeIn = (t) => Math.pow(clamp(t, 0, 1), 3);
-const easeInOut = (t) => (t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2);
+export const clamp = (v, a, b) => (v < a ? a : v > b ? b : v);
+export const lerp = (a, b, t) => a + (b - a) * t;
+export const easeOut = (t) => 1 - Math.pow(1 - clamp(t, 0, 1), 3);
+export const easeIn = (t) => Math.pow(clamp(t, 0, 1), 3);
+export const easeInOut = (t) => (t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2);
 /** 0 -> 1 -> 0 window that opens and closes around an act. */
-const window01 = (t, start, end, fadeIn = 1, fadeOut = 1) =>
+export const window01 = (t, start, end, fadeIn = 1, fadeOut = 1) =>
   Math.min(easeOut((t - start) / Math.max(0.001, fadeIn)), easeOut((end - t) / Math.max(0.001, fadeOut)), 1);
 
 /** Layout helper: proportional rectangle on the 1920x1080 stage. */
@@ -328,13 +332,57 @@ function actGrid(ctx, t) {
   text(ctx, 'thousands of steps. one intent.', 0.5, 0.85, 30, { weight: 300, color: MIST, alpha: window01(local, 12.6, 19, 1.0, 1.2), spacing: 3 });
 }
 
+/*
+ * 50–71.5s: acceleration, but not the same acceleration twice.
+ *
+ * Three distinct gears, so the eye never sees the same frame type twice:
+ *   gear 1 (50–57)  a field of interface planes drifting past — code, charts,
+ *                   terminals, graphs. Software, not stars.
+ *   gear 2 (57–64)  the planes rush; speed ramps 1x -> 4x, depth stretches.
+ *   gear 3 (64–71.5) the planes blow past the lens; the grid arrives to catch
+ *                   the fall, and the title lands on the impact.
+ */
 function actAscent(ctx, t) {
-  // 50–71.5s: acceleration — the camera falls through its own creation.
   const local = t - 50;
-  const speed = easeIn(local / 20);
-  streaks(ctx, t, { cx: 0.5, cy: 0.5, count: 220, alpha: 0.22 + speed * 0.5, color: local > 14 ? AURORA : SIGNAL, inner: 0.02, outer: 0.7 + speed * 0.6, len: 0.16 + speed * 0.5 });
-  glow(ctx, 0.5, 0.5, 0.1 + speed * 0.5, 'rgba(244,246,251,0.6)', 0.1 + speed * 0.35);
-  gridPlane(ctx, t, { horizon: 0.5, depth: 0.5, alpha: 0.08, color: AURORA, rows: 30, cols: 40 });
+  // Speed ramp: slow, cinematic hook first, then the agent's velocity.
+  const ramp = easeIn(clamp((local - 6) / 12, 0, 1));
+  const speed = 1 + ramp * 3;
+
+  // Gear 1–2: the plane field, always moving, never repeating.
+  planeField(ctx, t, {
+    count: 26,
+    speed,
+    spread: 1.0 + ramp * 0.5,
+    alpha: 0.5 + ramp * 0.22,
+    seed: 991
+  });
+
+  // Gear 3: the grid catches the fall once the ramp is at full speed.
+  if (ramp > 0.25) {
+    gridPlane(ctx, t, {
+      horizon: 0.5,
+      depth: 0.5,
+      alpha: (ramp - 0.25) * 0.16,
+      color: AURORA,
+      rows: 30,
+      cols: 40
+    });
+  }
+
+  // Streaks only arrive with the ramp, and never alone.
+  if (ramp > 0.4) {
+    streaks(ctx, t, {
+      cx: 0.5,
+      cy: 0.5,
+      count: Math.round(120 * ramp),
+      alpha: (ramp - 0.4) * 0.7,
+      color: AURORA,
+      inner: 0.02,
+      outer: 0.7 + ramp * 0.6,
+      len: 0.16 + ramp * 0.4
+    });
+  }
+  glow(ctx, 0.5, 0.5, 0.1 + ramp * 0.42, 'rgba(244,246,251,0.6)', 0.08 + ramp * 0.3);
 
   const line1 = window01(local, 0.6, 6.4, 0.8, 1.0);
   text(ctx, 'Every agent.', 0.5, 0.36, 70, { weight: 300, color: BONE, alpha: line1, spacing: 3 });
@@ -342,6 +390,15 @@ function actAscent(ctx, t) {
   const line2 = window01(local, 9.4, 17.0, 1.0, 1.4);
   text(ctx, 'One place to command them all.', 0.5, 0.5, 58, { weight: 500, color: BONE, alpha: line2, spacing: 2 });
   rule(ctx, 0.58, (local - 11) / 2.4, line2 * 0.9, AURORA, 0.3);
+
+  // Readout strip: sells the ramp as instrumentation rather than decoration.
+  if (ramp > 0.15) {
+    const a = (ramp - 0.15) * 1.1;
+    text(ctx, `agents ${Math.round(6 + ramp * 34)}  ·  parallel  ·  ${speed.toFixed(1)}x`, 0.5, 0.93, 20, {
+      font: '"JetBrains Mono", monospace', color: AURORA, alpha: clamp(a, 0, 1) * 0.85, spacing: 5
+    });
+  }
+
   const final = window01(local, 18.0, 21.4, 0.6, 0.6);
   text(ctx, 'THE NEW ERA', 0.5, 0.5, 96, { weight: 700, color: BONE, alpha: final, spacing: 12 });
 }
@@ -373,34 +430,107 @@ function actImpact(ctx, t) {
   glow(ctx, 0.5, 0.5, 0.9, 'rgba(255,107,61,0.5)', (1 - ring) * 0.5);
 }
 
-function actHero(ctx, t) {
-  // 74–99s: the product, confident, in full command of the frame.
-  const local = t - 74;
-  dust(ctx, t, 120, 0.28, 0.014);
-  glow(ctx, 0.5, 0.5, 0.7, 'rgba(79,140,255,0.4)', 0.2);
-  gridPlane(ctx, t, { horizon: 0.72, depth: 0.3, alpha: 0.12, color: SIGNAL });
+/*
+ * 74–99s: the product, shown working.
+ *
+ * The old cut held three empty wireframe cards for 24 seconds. This holds
+ * nothing: seven screens of simulated real software, cut every ~2.5s, with
+ * whip-pan pushes, cut flashes and a scrubber that sells the velocity. The
+ * last beat is the punchline card.
+ */
 
-  const spread = easeOut(local / 3.2);
-  const panels = [
-    { x: 0.5 - spread * 0.31, y: 0.5, w: 0.26, h: 0.46, title: 'AGENTS', delay: 0.4, accent: SIGNAL },
-    { x: 0.5, y: 0.5, w: 0.28, h: 0.52, title: 'NEWERA', delay: 0.0, accent: BONE },
-    { x: 0.5 + spread * 0.31, y: 0.5, w: 0.26, h: 0.46, title: 'TOOLS', delay: 0.8, accent: AURORA }
-  ];
-  panels.forEach((p, i) => {
-    panel(ctx, p.x, p.y, p.w, p.h, (local - p.delay) / 1.0, {
-      title: p.title,
-      alpha: window01(local, p.delay, 25, 0.6, 1.4) * (i === 1 ? 1 : 0.85),
-      accent: p.accent,
-      rows: i === 1 ? 6 : 4
-    });
+const HERO_PLAN = [
+  { id: 'terminal', dur: 3.2, tag: '01 · one prompt' },
+  { id: 'editor', dur: 2.8, tag: '02 · it edits your code' },
+  { id: 'dom', dur: 2.6, tag: '03 · it inspects the page' },
+  { id: 'agents', dur: 3.0, tag: '04 · six agents, one intent' },
+  { id: 'tests', dur: 2.6, tag: '05 · it verifies itself' },
+  { id: 'deploy', dur: 2.4, tag: '06 · it ships' },
+  { id: 'product', dur: 5.6, tag: '07 · the workspace' },
+  { id: 'card', dur: 2.6, tag: '' }
+];
+
+/** The punchline: the brand line, held on black. */
+function shotCard(ctx, local, alpha) {
+  const inA = easeOut(local / 0.5);
+  glow(ctx, 0.5, 0.5, 0.6, 'rgba(79,140,255,0.45)', inA * 0.26);
+  mark(ctx, 0.5, 0.34, 0.08 * (0.82 + easeOut(local / 0.9) * 0.18), local, alpha * inA * 0.95);
+  text(ctx, 'An agent that', 0.5, 0.58, 56, { weight: 300, color: MIST, alpha: alpha * inA, spacing: 2 });
+  text(ctx, 'finishes the work.', 0.5, 0.67, 56, { weight: 600, color: BONE, alpha: alpha * easeOut((local - 0.3) / 0.6), spacing: 2 });
+  rule(ctx, 0.755, (local - 0.7) / 1.2, alpha * easeOut((local - 0.7) / 0.8) * 0.9, SIGNAL, 0.32);
+}
+
+const HERO_SHOTS = {
+  terminal: shotTerminal,
+  editor: shotEditor,
+  dom: shotDom,
+  agents: shotAgents,
+  tests: shotTests,
+  deploy: shotDeploy,
+  product: shotProduct,
+  card: shotCard
+};
+
+function actHero(ctx, t) {
+  const local = t - 74;
+  dust(ctx, t, 110, 0.2, 0.012);
+  glow(ctx, 0.5, 0.5, 0.8, 'rgba(79,140,255,0.3)', 0.15);
+
+  const m = montage(local, HERO_PLAN, { fade: 0.13, push: 0.24 });
+  const draw = HERO_SHOTS[m.shot.id];
+
+  // Whip-pan push: alternate shots slide in from opposite sides and settle.
+  ctx.save();
+  const dir = m.index % 2 === 0 ? 1 : -1;
+  ctx.translate(dir * m.slide * 0.07 * WIDTH, 0);
+  const scale = 1 + (1 - easeOut(m.into / 0.7)) * 0.022;
+  ctx.translate(WIDTH / 2, HEIGHT / 2);
+  ctx.scale(scale, scale);
+  ctx.translate(-WIDTH / 2, -HEIGHT / 2);
+  draw(ctx, m.into, m.alpha);
+  ctx.restore();
+
+  cutFlash(ctx, local, m.times, 1);
+  smear(ctx, local, m.times, 1, m.index % 2 === 0 ? SIGNAL : AURORA);
+
+  // Shot chip: reads like a product-demo lower third, pinned top-centre.
+  if (m.shot.tag) {
+    const chip = easeOut(m.into / 0.25) * easeOut((m.shot.end - local) / 0.25);
+    ctx.save();
+    ctx.globalAlpha = chip * 0.5;
+    ctx.fillStyle = 'rgba(5,6,10,0.85)';
+    const cw = 0.2 * WIDTH;
+    ctx.fillRect(WIDTH / 2 - cw / 2, 0.022 * HEIGHT, cw, 0.036 * HEIGHT);
+    ctx.restore();
+    text(ctx, m.shot.tag, 0.5, 0.040, 18, { font: '"JetBrains Mono", monospace', color: AURORA, alpha: chip * 0.95, spacing: 4 });
+  }
+
+  // Segment pips: eight slots, the live one filled.
+  HERO_PLAN.forEach((p, i) => {
+    const on = i === m.index;
+    const px = 0.5 + (i - (HERO_PLAN.length - 1) / 2) * 0.022;
+    ctx.save();
+    ctx.globalAlpha = on ? 0.95 : 0.28;
+    ctx.fillStyle = on ? SIGNAL : MIST;
+    ctx.fillRect((px - 0.008) * WIDTH, 0.070 * HEIGHT, 0.016 * WIDTH, on ? 4 : 2);
+    ctx.restore();
   });
 
-  const headline = window01(local, 1.6, 10.4, 1.2, 1.4);
-  text(ctx, 'NEWERA AI AGENT', 0.5, 0.13, 34, { font: '"JetBrains Mono", monospace', weight: 500, color: SIGNAL, alpha: headline, spacing: 14 });
-  const mid = window01(local, 11.0, 19.4, 1.0, 1.4);
-  text(ctx, 'An agent that', 0.5, 0.78, 58, { weight: 300, color: MIST, alpha: mid, spacing: 2 });
-  text(ctx, 'finishes the work.', 0.5, 0.87, 58, { weight: 600, color: BONE, alpha: window01(local, 12.4, 19.4, 1.0, 1.4), spacing: 2 });
-  streaks(ctx, t, { cx: 0.5, cy: 0.5, count: 60, alpha: 0.1, color: AURORA, inner: 0.4, outer: 0.8, len: 0.2 });
+  // Scrubber across the whole montage, with a tick on every cut.
+  const prog = clamp(local / m.total, 0, 1);
+  ctx.save();
+  ctx.globalAlpha = 0.4;
+  ctx.fillStyle = 'rgba(141,152,178,0.28)';
+  ctx.fillRect(0.06 * WIDTH, 0.978 * HEIGHT, 0.88 * WIDTH, 3);
+  ctx.fillStyle = SIGNAL;
+  ctx.globalAlpha = 0.8;
+  ctx.fillRect(0.06 * WIDTH, 0.978 * HEIGHT, 0.88 * WIDTH * prog, 3);
+  ctx.globalAlpha = 0.55;
+  ctx.fillStyle = BONE;
+  m.times.forEach((s) => {
+    ctx.fillRect((0.06 + 0.88 * (s.start / m.total)) * WIDTH, 0.9725 * HEIGHT, 1.5, 11);
+  });
+  ctx.restore();
 }
 
 function actReveal(ctx, t) {

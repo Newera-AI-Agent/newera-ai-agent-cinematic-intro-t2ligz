@@ -339,6 +339,90 @@ function shimmer(ctx, dest, t0, dur, gain = 0.12, pan = 0) {
   });
 }
 
-const VOICES = { tone, pad, pluck, kick, snare, hat, sub, riser, impact, whoosh, shimmer, noiseBuffer, makePanner, shape };
+/**
+ * Foley click — the sound of a key, a cut or a switch.
+ * Short, dry and bright so it survives under a busy mix and lands on a frame.
+ * `kind` picks the character: 'ui' (plastic key), 'cut' (film splice),
+ * 'switch' (mechanical toggle).
+ */
+function click(ctx, dest, t0, gain = 0.2, kind = 'ui', pan = 0, cache, rnd) {
+  const spec = {
+    ui: { freq: 2400, q: 1.4, len: 0.055, body: 1800 },
+    cut: { freq: 5200, q: 0.9, len: 0.035, body: 900 },
+    switch: { freq: 1300, q: 3.2, len: 0.085, body: 320 }
+  }[kind] || { freq: 2400, q: 1.4, len: 0.055, body: 1800 };
+
+  // Transient: a very short band-passed noise burst.
+  const source = ctx.createBufferSource();
+  source.buffer = noiseBuffer(ctx, 0.12, rnd, cache);
+  const band = ctx.createBiquadFilter();
+  band.type = 'bandpass';
+  band.Q.value = spec.q;
+  band.frequency.value = spec.freq;
+  const amp = ctx.createGain();
+  shape(amp.gain, t0, gain, 0.0006, spec.len);
+  const panner = makePanner(ctx, pan);
+  source.connect(band);
+  band.connect(amp);
+  amp.connect(panner);
+  panner.connect(dest);
+  source.start(t0);
+  source.stop(t0 + spec.len + 0.02);
+
+  // Body: a tiny pitched thock so the click reads as an object, not static.
+  tone(ctx, dest, {
+    t0,
+    freq: spec.body,
+    glideTo: spec.body * 0.55,
+    dur: spec.len * 1.6,
+    type: 'triangle',
+    gain: gain * 0.5,
+    attack: 0.001,
+    decay: spec.len * 1.8,
+    pan
+  });
+}
+
+/**
+ * Glitch sweep — a digital stutter used to sell a hard cut or a system event.
+ * Alternates short noise slices with a detuned saw so it reads as data, not wind.
+ */
+function glitch(ctx, dest, t0, dur = 0.4, gain = 0.22, cache, rnd) {
+  const slices = Math.max(3, Math.round(dur / 0.045));
+  for (let i = 0; i < slices; i += 1) {
+    const st = t0 + (i / slices) * dur;
+    const sliceLen = (dur / slices) * (0.4 + rnd() * 0.5);
+    const source = ctx.createBufferSource();
+    source.buffer = noiseBuffer(ctx, 0.3, rnd, cache);
+    const filter = ctx.createBiquadFilter();
+    filter.type = rnd() > 0.5 ? 'highpass' : 'bandpass';
+    filter.frequency.value = 700 + rnd() * 5200;
+    filter.Q.value = 1.2 + rnd() * 5;
+    const amp = ctx.createGain();
+    shape(amp.gain, st, gain * (0.35 + rnd() * 0.65), 0.001, sliceLen);
+    const panner = makePanner(ctx, (rnd() * 2 - 1) * 0.85);
+    source.connect(filter);
+    filter.connect(amp);
+    amp.connect(panner);
+    panner.connect(dest);
+    source.start(st);
+    source.stop(st + sliceLen + 0.02);
+  }
+  // A detuned saw under the stutter gives it pitch and menace.
+  tone(ctx, dest, {
+    t0,
+    freq: 320,
+    glideTo: 96,
+    dur,
+    type: 'sawtooth',
+    gain: gain * 0.3,
+    attack: 0.004,
+    decay: dur,
+    cutoff: 2600,
+    q: 3.4
+  });
+}
+
+const VOICES = { tone, pad, pluck, kick, snare, hat, sub, riser, impact, whoosh, shimmer, click, glitch, noiseBuffer, makePanner, shape };
 
 export { VOICES };

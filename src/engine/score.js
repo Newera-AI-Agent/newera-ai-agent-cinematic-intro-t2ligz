@@ -9,7 +9,7 @@
 
 import { DURATION, SAMPLE_RATE, mulberry32, noteFreq, VOICES } from './audio.js';
 
-const { tone, pad, pluck, kick, snare, hat, sub, riser, impact, whoosh, shimmer } = VOICES;
+const { tone, pad, pluck, kick, snare, hat, sub, riser, impact, whoosh, shimmer, click, glitch } = VOICES;
 
 export const BPM = 84;
 const BEAT = 60 / BPM;
@@ -198,6 +198,10 @@ export function scheduleScore(ctx, bus, { t0 = 0, seed = 20261010 } = {}) {
   R(66.0, 3.4, 0.32);
   tone(ctx, bus, { t0: at(66.0), freq: noteFreq('a2'), glideTo: noteFreq('a4'), dur: 5.4, type: 'sawtooth', gain: 0.07, attack: 5.0, decay: 0.5, cutoff: 5200, q: 2.6 });
   tone(ctx, bus, { t0: at(68.0), freq: noteFreq('e3'), glideTo: noteFreq('e5'), dur: 3.4, type: 'triangle', gain: 0.05, attack: 3.2, decay: 0.4 });
+  // The title lands: a sub drop under 'THE NEW ERA' so the words have weight.
+  sub(ctx, bus, at(68.0), 3.4, 0.26, 32);
+  impact(ctx, bus, at(68.0), 0.55, cache, rnd);
+  glitch(ctx, bus, at(67.85), 0.5, 0.2, cache, rnd);
 
   /* ---------------- ACT 5 · IMPACT (71.5 – 74.0) ---------------- */
   // The drop. Sub, crack, and a brief hole in the world.
@@ -228,6 +232,43 @@ export function scheduleScore(ctx, bus, { t0 = 0, seed = 20261010 } = {}) {
   W(91.5, 1.0, 0.2, 0.9, -0.9);
   R(95.6, 3.2, 0.26);
   I(98.8, 0.85);
+
+  // Foley: the montage is cut to the frame, so it must be cut to the ear too.
+  // Cut points mirror HERO_PLAN in film.js (74.0 + cumulative durations).
+  const HERO_CUTS = [74.0, 77.2, 80.0, 82.6, 85.6, 88.2, 90.6, 96.2];
+  HERO_CUTS.forEach((c, i) => {
+    // Every cut gets a splice click; the faster middle cuts get a glitch too.
+    click(ctx, bus, at(c), 0.16 + (i === 0 ? 0.06 : 0), i % 3 === 0 ? 'switch' : 'cut', (i % 2 === 0 ? -1 : 1) * 0.35, cache, rnd);
+    if (i > 0 && i < 7) glitch(ctx, bus, at(c), 0.22, 0.14, cache, rnd);
+  });
+  // Terminal shot (74.0–77.2): keystrokes and a run confirmation.
+  for (let i = 0; i < 22; i += 1) {
+    click(ctx, bus, at(74.35 + i * 0.105), 0.07 + (i % 3) * 0.012, 'ui', -0.18, cache, rnd);
+  }
+  click(ctx, bus, at(76.55), 0.24, 'switch', 0.1, cache, rnd);
+  // Editor shot (77.2–80.0): typing, then the agent's own diff landing.
+  for (let i = 0; i < 16; i += 1) {
+    click(ctx, bus, at(77.5 + i * 0.09), 0.06, 'ui', 0.2, cache, rnd);
+  }
+  click(ctx, bus, at(79.45), 0.2, 'cut', -0.2, cache, rnd);
+  // DOM shot (80.0–82.6): hover blips, then the click that snaps the highlight.
+  click(ctx, bus, at(80.4), 0.11, 'ui', -0.3, cache, rnd);
+  click(ctx, bus, at(81.15), 0.26, 'switch', 0.15, cache, rnd);
+  click(ctx, bus, at(81.95), 0.1, 'ui', 0.3, cache, rnd);
+  // Agent graph (82.6–85.6): one click per worker as it starts.
+  for (let i = 0; i < 5; i += 1) click(ctx, bus, at(83.2 + i * 0.3), 0.13, 'switch', (i % 2 === 0 ? -1 : 1) * 0.4, cache, rnd);
+  // Test runner (85.6–88.2): tick per suite, a soft fail, then green.
+  for (let i = 0; i < 5; i += 1) click(ctx, bus, at(85.9 + i * 0.62), 0.12, 'ui', 0.25, cache, rnd);
+  click(ctx, bus, at(89.5), 0.14, 'cut', -0.15, cache, rnd);
+  // Deploy (88.2–90.6): four log lines landing, then the live stamp.
+  for (let i = 0; i < 4; i += 1) click(ctx, bus, at(88.4 + i * 0.5), 0.13, 'ui', (i % 2 === 0 ? -1 : 1) * 0.3, cache, rnd);
+  click(ctx, bus, at(90.4), 0.3, 'switch', 0, cache, rnd);
+  glitch(ctx, bus, at(90.4), 0.35, 0.16, cache, rnd);
+  // Product workspace (90.6–96.2): UI ticks under the plan executing.
+  for (let i = 0; i < 14; i += 1) {
+    click(ctx, bus, at(91.0 + i * 0.36), 0.07 + (i % 4) * 0.01, 'ui', (i % 2 === 0 ? -0.25 : 0.25), cache, rnd);
+  }
+  click(ctx, bus, at(95.4), 0.22, 'cut', 0, cache, rnd);
 
   /* ---------------- ACT 7 · REVEAL (99.0 – 118.0) ---------------- */
   // Space, glass and the name arriving.

@@ -15,7 +15,7 @@ Scripts: `dev`, `build`, `preview`
 ### `index.html` - 54 lines
 - exports: (nothing public)
 
-### `src/engine/audio.js` - 345 lines
+### `src/engine/audio.js` - 429 lines
 - `mulberry32` (function)
 - `noteFreq` (function)
 - `SAMPLE_RATE` (const)
@@ -24,15 +24,21 @@ Scripts: `dev`, `build`, `preview`
 - `ACTS` (const)
 - `VOICES` (const)
 
-### `src/engine/film.js` - 488 lines
-- imports: `src/engine/audio.js`
+### `src/engine/film.js` - 618 lines
+- imports: `src/engine/audio.js`, `src/engine/sim.js`
 - `createFilm` (function)
 - `WIDTH` (const)
 - `HEIGHT` (const)
 - `CHAPTERS` (const)
 - `ACTS` (const)
+- `clamp` (const)
+- `lerp` (const)
+- `easeOut` (const)
+- `easeIn` (const)
+- `easeInOut` (const)
+- `window01` (const)
 
-### `src/engine/score.js` - 304 lines
+### `src/engine/score.js` - 308 lines
 - imports: `src/engine/audio.js`
 - `createMasterBus` (function)
 - `scheduleScore` (function)
@@ -40,7 +46,21 @@ Scripts: `dev`, `build`, `preview`
 - `encodeWav` (function)
 - `BPM` (const)
 
-### `src/main.js` - 272 lines
+### `src/engine/sim.js` - 1080 lines
+- `shotTerminal` (function)
+- `shotEditor` (function)
+- `montage` (function)
+- `cutFlash` (function)
+- `smear` (function)
+- `shotDom` (function)
+- `shotAgents` (function)
+- `shotTests` (function)
+- `shotDeploy` (function)
+- `shotProduct` (function)
+- `uiPlane` (function)
+- `planeField` (function)
+
+### `src/main.js` - 271 lines
 - imports: `src/engine/film.js`, `src/engine/score.js`, `src/engine/audio.js`, `src/style.css`
 - exports: (nothing public)
 

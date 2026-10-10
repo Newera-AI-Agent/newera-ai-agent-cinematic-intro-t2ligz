@@ -1,10 +1,8 @@
-# NewEra AI Agent — cinematic intro film
+# NewEra cinematic intro — v2 upgrade from review
 
-- [x] Scaffold static Vite film project with valid build contract
-- [x] VM job 1: download Manus 2.0 reference, extract frames + audio metrics
-- [x] Author original NewEra timeline engine (scenes, motion, typography, transitions)
-- [x] Author original synchronized score + sound design (procedural synthesis to WAV)
-- [x] Wire web player with synced audio and full playback controls
-- [x] Verify build contract with green CI build
-- [~] VM job 2: finish reference analysis + render 1080p MP4 with mixed audio
-- [ ] Collect MP4, verify runtime probe, finish with evidence
+- [x] Rework actHero into a rapid-fire montage of simulated real software (terminal, editor, DOM, agent graph, tests, deploy, product)
+- [x] Break the repeated warp motif in actAscent with layered interface planes + speed ramp
+- [x] Add foley layering to the score (UI clicks, glitch sweeps, sub drop) with new synth voices
+- [~] static_check the engine and fix any structural errors
+- [ ] VM build + render new 1080p MP4 with mixed audio, commit, redeploy to newera-film.pages.dev
+- [ ] Report verified evidence for the v2 film
