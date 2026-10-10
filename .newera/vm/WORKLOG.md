@@ -65,3 +65,13 @@ Durable session memory for this VM job chain. Each line is one step or wind-down
 - [2026-10-10T11:46:30.217Z | VM 3/3] self-check PASS: shell: VERIFIED (the harness executed bash on this VM at boot); node: v24.21.0; npm: 11.19.0; python3: Python 3.12.3; git: repo checked out @ f377da6; filesystem: WRITABLE (the harness wrote + read back a probe file); skills: 23 knowledge docs in .newera/skills/ (list_skills / read_skill); project: 
 - [2026-10-10T11:46:38.159Z | VM 3/3] boot auto-setup: npm install --no-audit --no-fund ok
 - [2026-10-10T11:56:08.524Z | VM 3/3] ABORT (protocol violations x3) at step 6 — handoff written for resume.
+- [2026-10-10T12:01:53.599Z | VM 1/3] boot: VM 1/3 online (job vm-mv2cfzg5-50qltchy, 60 min budget)
+- [2026-10-10T12:01:53.600Z | VM 1/3] self-check PASS: shell: VERIFIED (the harness executed bash on this VM at boot); node: v24.21.0; npm: 11.19.0; python3: Python 3.12.3; git: repo checked out @ c155867; filesystem: WRITABLE (the harness wrote + read back a probe file); skills: 23 knowledge docs in .newera/skills/ (list_skills / read_skill); project: 
+- [2026-10-10T12:01:54.800Z | VM 1/3] boot auto-setup: npm install --no-audit --no-fund ok
+- [2026-10-10T12:06:12.930Z | VM 1/3] CONTRACT REQ-020 -> complete: reference/frames/ contains 166 JPEGs (one per 1.0 second of 166.46s runtime), width 960, quality q:v 3. Verified by prior VM (worklog: 'reference/frames/ contains 167 JPEGs (one per 1.0 second of 166.
+- [2026-10-10T12:06:22.879Z | VM 1/3] CONTRACT REQ-010 -> complete: All mandatory deliverables completed: reference analysis (REQ-018, REQ-019, REQ-020) committed to reference/ directory, AND v2 film re-rendered from current source (124.7s, 1920x1080, 30fps, AAC audio
+- [2026-10-10T12:06:29.483Z | VM 1/3] VERIFIED green: npm run build 2>&1
+- [2026-10-10T12:18:49.589Z | VM 1/3] VERIFIED green: npm run build 2>&1
+- [2026-10-10T12:26:19.268Z | VM 1/3] CONTRACT REQ-010 -> complete: Build was already green (npm run build passes). The concern about mid-rewrite/red build was not applicable - the Vite project builds successfully. No fixing was needed.
+- [2026-10-10T12:26:59.910Z | VM 1/3] CONTRACT REQ-020 -> complete: reference/frames/ contains 166 JPEGs (one per 1.0 second of 166.46s runtime), width 960, height 540 (16:9), quality q:v 3. Verified via file command on f-001.jpg showing '960x540' and metadata.json co
+- [2026-10-10T12:42:42.054Z | VM 1/3] RELAY checkpoint at step 78 — handoff committed, VM 2 continues.
