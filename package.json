@@ -1,0 +1,15 @@
+{
+  "name": "newera-intro",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "description": "NewEra AI Agent — cinematic intro film (deterministic canvas timeline + original score)",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview --port 3000 --host"
+  },
+  "devDependencies": {
+    "vite": "^5.4.10"
+  }
+}
