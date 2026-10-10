@@ -1,76 +1,61 @@
-# RELAY HANDOFF — job vm-mv2cfzg5-50qltchy (VM 1 of 3)
-Written at the 15-minute checkpoint with 13 min left, after 78 steps.
+# RELAY HANDOFF — job vm-mv2e1fzq-d7mqhm0b (VM 1 of 3)
+Written at the 15-minute checkpoint with 1 min left, after 36 steps.
 
 ## Original task
-TASK: Re-render the NewEra AI Agent cinematic intro film to 1080p MP4 from the CURRENT v2 source, commit it, and deploy to Cloudflare Pages at subdomain newera-film.
+RENDER-ONLY JOB. Read this brief completely before acting.
 
-REPO: Newera-AI-Agent/newera-ai-agent-cinematic-intro-t2ligz (public, branch main). Already checked out on the runner. Work directly on main.
+REPO: Newera-AI-Agent/newera-ai-agent-cinematic-intro-t2ligz, branch main (public). Work on main.
 
-WHY THIS JOB EXISTS: a previous VM rendered public/newera-intro-1080p.mp4 from the OLD v1 engine. The engine was since rewritten (commit 8ad74b9, CI green) and the MP4 is now STALE. Your single goal is a fresh MP4 rendered from the current source.
+ABSOLUTE RULES
+- DO NOT call request_deploy. DO NOT deploy anything. Deployment is handled by the orchestrator outside this job. Calling request_deploy ends this job uselessly. There is NO deploy pre-approval for this job.
+- DO NOT modify anything under reference/ or .github/workflows/.
+- DO NOT commit /tmp/frames or any JPEG frame sequence into the repo.
+- Only touch src/engine/* if the render exposes an actual runtime crash, and then make the smallest possible fix and report exactly what and why.
 
-WHAT CHANGED IN v2 (already on main):
-- src/engine/sim.js exports shotTerminal, shotEditor, shotDom, shotAgents, shotTests, shotDeploy, shotProduct, montage, cutFlash, smear, uiPlane, planeField.
-- src/engine/film.js actHero is an 8-shot montage (terminal, editor, DOM inspector, agent graph, test runner, deploy, product workspace, title card) with whip-pan pushes and cut flashes.
-- src/engine/film.js actAscent uses planeField (layered interface planes, 1x->4x speed ramp) instead of a repeated warp.
-- src/engine/audio.js added `click` and `glitch` voices; src/engine/score.js schedules foley clicks on every hero cut point plus a sub drop on the ascent title.
+THE ONE DELIVERABLE
+A freshly rendered, ffprobe-verified `public/newera-intro-1080p.mp4` committed to main. The current file in the repo is a STALE v1 render and must be REPLACED.
 
-STEP 1 — BUILD GREEN FIRST
-  npm install && npm run build
-Must succeed and produce dist/index.html. If it fails, read the FIRST error, fix the cause in src/, rebuild. Do not render on a red build.
+WHAT ALREADY EXISTS
+- v2 film engine committed and building green: src/engine/film.js, src/engine/sim.js, src/engine/audio.js, src/engine/score.js.
+- The capture harness is committed at tools/render.mjs (154 lines). It starts `npx vite preview --port 4173 --host`, launches Puppeteer at 1920x1080, opens http://localhost:4173/?capture=1, waits for `window.__NEWERA__.ready`, reads `window.__NEWERA__.duration`, renders each 1/30 s frame via `window.__NEWERA__.render(t)` and screenshots to /tmp/frames/f-%05d.jpg (jpeg q92), extracts the score via `window.__NEWERA__.wav()` to /tmp/score.wav, then ffmpeg-encodes public/newera-intro-1080p.mp4 (libx264, yuv420p, crf 18, preset medium, aac 192k, -shortest, +faststart) and ffprobe-verifies it.
 
-STEP 2 — REUSE OR WRITE THE CAPTURE HARNESS
-Look for an existing capture script at the repo root: capture.js or capture.cjs (a prior session wrote one but it may not be committed). If one exists and works, reuse it. Otherwise write tools/render.mjs (Node ESM):
-  - Serve the built site: start `npx vite preview --port 4173 --host` (or `python3 -m http.server 4173 -d dist`) as a child process; wait until http://localhost:4173 responds.
-  - Launch Puppeteer (`npm i -D puppeteer`; if Chromium needs system libs, apt-get install -y chromium and set PUPPETEER_EXECUTABLE_PATH). Launch args: ['--no-sandbox','--disable-setuid-sandbox','--disable-dev-shm-usage','--font-render-hinting=none'].
-  - Open http://localhost:4173/?capture=1 at viewport { width: 1920, height: 1080, deviceScaleFactor: 1 }. capture=1 adds body.is-render which hides HUD/overlay chrome.
-  - Wait for window.__NEWERA__ && window.__NEWERA__.ready. Then read duration = window.__NEWERA__.duration (do NOT assume it; it is ~124 s) and width/height from the same object.
-  - Render at 30 fps: for i = 0 .. ceil(duration*30)-1: await page.evaluate(t => window.__NEWERA__.render(t), i/30); await page.screenshot({ path: `/tmp/frames/f-${String(i).padStart(5,'0')}.jpg`, type: 'jpeg', quality: 92 });
-  - Extract the score: const b64 = await page.evaluate(async () => { const buf = await window.__NEWERA__.wav(); const bytes = new Uint8Array(buf); let s=''; const CH=0x8000; for (let i=0;i<bytes.length;i+=CH) s += String.fromCharCode.apply(null, bytes.subarray(i,i+CH)); return btoa(s); }); write Buffer.from(b64,'base64') to /tmp/score.wav.
-  - Always kill the preview child and close the browser in a finally block. Exit non-zero with a clear message on failure.
+STEPS
+1. `npm install --no-audit --no-fund`.
+2. Ensure ffmpeg+ffprobe: `which ffmpeg || (apt-get update && apt-get install -y ffmpeg)`.
+3. Ensure a headless Chromium exists for Puppeteer. Try in order and stop at the first that works:
+   a. `npx puppeteer browsers install chrome`
+   b. `apt-get update && apt-get install -y chromium` then export PUPPETEER_EXECUTABLE_PATH=$(which chromium || which chromium-browser)
+   c. `npm install --save-dev playwright && npx playwright install --with-deps chromium` and adapt the launch call in tools/render.mjs to playwright's chromium if puppeteer cannot launch at all.
+   Keep the launch flags --no-sandbox --disable-setuid-sandbox --disable-dev-shm-usage.
+4. Run `node tools/render.mjs`. It logs progress every 300 frames; expect roughly duration*30 frames. This step takes many minutes — let it run, do not abort it early.
+5. HARD GATE. Run ffprobe on public/newera-intro-1080p.mp4 and print the raw JSON. Do NOT commit unless ALL of these hold:
+   - a video stream at 1920x1080, 30/1 fps, codec h264
+   - an audio stream with codec aac
+   - format duration within ~1 s of the engine duration the page reported
+   - format size > 5 MB
+   If any check fails, fix the cause and re-render; do not commit a failing file.
+6. Confirm nothing unwanted is staged: `git status --porcelain` must not show a frames directory or a JPEG sequence.
+7. Commit exactly:
+   git add public/newera-intro-1080p.mp4 tools/render.mjs package.json package-lock.json
+   (also add src/engine/* ONLY if you made a minimal crash fix)
+   git commit -m "Re-render v2 film: montage hero, plane-field ascent, foley score"
+   git push origin main
+8. Verify `npm run build` is still green after your changes.
+9. Print: the new commit SHA, `git show --stat HEAD`, and the full ffprobe block.
 
-STEP 3 — ENCODE
-  ffmpeg -y -framerate 30 -i /tmp/frames/f-%05d.jpg -i /tmp/score.wav -c:v libx264 -pix_fmt yuv420p -crf 18 -preset medium -c:a aac -b:a 192k -shortest -movflags +faststart public/newera-intro-1080p.mp4
-  (apt-get update && apt-get install -y ffmpeg if missing.)
-
-STEP 4 — VERIFY (acceptance gate, do not skip)
-  ffprobe -v error -show_entries format=duration,size:stream=codec_type,codec_name,width,height,r_frame_rate -of json public/newera-intro-1080p.mp4
-Required: video stream 1920x1080 at 30 fps AND an audio stream (aac). Duration within ~1 s of window.__NEWERA__.duration. File > 5 MB. If any check fails, fix and re-render. NEVER commit a video without a valid audio stream.
-
-STEP 5 — COMMIT
-  git add public/newera-intro-1080p.mp4 tools/render.mjs package.json package-lock.json
-  git commit -m "Re-render v2 film: montage hero, plane-field ascent, foley score"
-  git push origin main
-Add render frames to .gitignore; do NOT commit the PNG/JPEG frame sequence.
-
-STEP 6 — DEPLOY
-After the commit is pushed and `npm run build` is green, request a deploy to Cloudflare Pages, subdomain "newera-film", mode permanent. This subdomain is ALREADY APPROVED by the user — do not ask. Report the exact live URL and its HTTP status.
-
-FINISH REPORT:
-- npm run build result
-- frame count rendered and runtime in seconds
-- ffprobe summary of public/newera-intro-1080p.mp4 (resolution, fps, codecs, duration, size)
-- commit SHA
-- live deploy URL + HTTP status
-- any step that failed, with the exact error
-
-CONSTRAINTS:
-- Do NOT modify reference/ (committed analysis of a different video).
-- Do NOT touch .github/workflows/*.
-- window.__NEWERA__.render(t) is pure: the same t always yields the same frame.
-- The MP4 is the deliverable; a green build alone is NOT sufficient evidence.
+ACCEPTANCE
+- main contains a fresh public/newera-intro-1080p.mp4: >5 MB, 1920x1080 h264 @30 fps, AAC audio, duration matching the engine runtime.
+- reference/ and .github/workflows/ untouched.
+- npm run build green.
+- No request_deploy call was made.
 
 ## DEPLOY (user pre-approved)
-When the build VERIFIABLY passes, call request_deploy{subdomain:"newera-film", mode:"permanent"} IMMEDIATELY — the user already approved newera-newera-film.pages.dev. Do not ask again; do not deploy off a red build. If the tool returns an error, RETRY it — never claim the site is live unless request_deploy returned ok. (The harness also auto-requests this at wind-down as a safety net, but call it yourself the moment the build is green.)
+When the build VERIFIABLY passes, call request_deploy{subdomain:"newera-film", mode:"preview"} IMMEDIATELY — the user already approved newera-newera-film.pages.dev. Do not ask again; do not deploy off a red build. If the tool returns an error, RETRY it — never claim the site is live unless request_deploy returned ok. (The harness also auto-requests this at wind-down as a safety net, but call it yourself the moment the build is green.)
 
 ## Progress so far
 (no rolling summary was generated — reconstruct state from the git log below and the repo itself)
 
 ## Worklog (latest lines — every VM in this chain appended)
-- [2026-10-10T10:37:16.143Z | VM 2/3] CONTRACT REQ-015 -> complete: Environment verified: ffmpeg, python3, npm, node all available
-- [2026-10-10T10:37:21.868Z | VM 2/3] CONTRACT REQ-014 -> complete: Reference video downloaded to /tmp/reference.mp4 in previous VM (verified by metadata.json and frames generation)
-- [2026-10-10T10:37:28.750Z | VM 2/3] CONTRACT REQ-013 -> complete: Reference video URL confirmed and used for analysis
-- [2026-10-10T10:37:34.000Z | VM 2/3] CONTRACT REQ-012 -> complete: Reference video analysis completed - all deliverables generated
-- [2026-10-10T10:37:43.631Z | VM 2/3] CONTRACT REQ-011 -> complete: No deployment requested or performed - task explicitly states DO NOT DEPLOY
 - [2026-10-10T10:37:53.316Z | VM 2/3] CONTRACT REQ-008 -> complete: npm run build passes - verified in this session (vite build succeeded in 472ms)
 - [2026-10-10T10:37:58.613Z | VM 2/3] CONTRACT REQ-009 -> complete: npm run build passes - the Vite project builds successfully
 - [2026-10-10T10:38:08.309Z | VM 2/3] CONTRACT REQ-010 -> complete: src/, index.html, package.json, vite.config.js, TODO.md, CONTRACTS.md, .github/workflows/ untouched - only reference/ and public/ modified
@@ -106,22 +91,24 @@ When the build VERIFIABLY passes, call request_deploy{subdomain:"newera-film", m
 - [2026-10-10T12:18:49.589Z | VM 1/3] VERIFIED green: npm run build 2>&1
 - [2026-10-10T12:26:19.268Z | VM 1/3] CONTRACT REQ-010 -> complete: Build was already green (npm run build passes). The concern about mid-rewrite/red build was not applicable - the Vite project builds successfully. No fixing was needed.
 - [2026-10-10T12:26:59.910Z | VM 1/3] CONTRACT REQ-020 -> complete: reference/frames/ contains 166 JPEGs (one per 1.0 second of 166.46s runtime), width 960, height 540 (16:9), quality q:v 3. Verified via file command on f-001.jpg showing '960x540' and metadata.json co
+- [2026-10-10T12:42:42.054Z | VM 1/3] RELAY checkpoint at step 78 — handoff committed, VM 2 continues.
+- [2026-10-10T12:46:33.785Z | VM 1/3] boot: VM 1/3 online (job vm-mv2e1fzq-d7mqhm0b, 30 min budget)
+- [2026-10-10T12:46:33.786Z | VM 1/3] self-check PASS: shell: VERIFIED (the harness executed bash on this VM at boot); node: v24.21.0; npm: 11.19.0; python3: Python 3.12.3; git: repo checked out @ 63f42c1; filesystem: WRITABLE (the harness wrote + read back a probe file); skills: 23 knowledge docs in .newera/skills/ (list_skills / read_skill); project: 
+- [2026-10-10T12:46:34.964Z | VM 1/3] boot auto-setup: npm install --no-audit --no-fund ok
+- [2026-10-10T13:02:53.489Z | VM 1/3] VERIFIED green: npm run build
 
 ## Repository state
 Changed/added files:
  M .newera/vm/WORKLOG.md
- M .newera/vm/contract.json
- D dist/assets/index-5y62Oiza.js
- M dist/index.html
-?? .newera/vm/build-output-path.txt
-?? .newera/vm/deploy-request.json
+ M dist/newera-intro-1080p.mp4
 ?? agent.log
-?? dist/assets/index-DMmU1p1b.js
+?? ffmpeg-7.0.2-amd64-static/
+?? ffmpeg.tar.xz
 ?? node_modules/
 
 Recent commits:
-bce7ca4 Re-render v2 film: montage hero, plane-field ascent, foley score
-c155867 newera: VM agent job vm-mv2cfzg5-50qltchy
+3b91f89 Re-render v2 film: montage hero, plane-field ascent, foley score
+63f42c1 newera: VM agent job vm-mv2e1fzq-d7mqhm0b
 
 ## Current plan (todo state)
 ## CURRENT PLAN (10 steps)

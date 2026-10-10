@@ -75,3 +75,8 @@ Durable session memory for this VM job chain. Each line is one step or wind-down
 - [2026-10-10T12:26:19.268Z | VM 1/3] CONTRACT REQ-010 -> complete: Build was already green (npm run build passes). The concern about mid-rewrite/red build was not applicable - the Vite project builds successfully. No fixing was needed.
 - [2026-10-10T12:26:59.910Z | VM 1/3] CONTRACT REQ-020 -> complete: reference/frames/ contains 166 JPEGs (one per 1.0 second of 166.46s runtime), width 960, height 540 (16:9), quality q:v 3. Verified via file command on f-001.jpg showing '960x540' and metadata.json co
 - [2026-10-10T12:42:42.054Z | VM 1/3] RELAY checkpoint at step 78 — handoff committed, VM 2 continues.
+- [2026-10-10T12:46:33.785Z | VM 1/3] boot: VM 1/3 online (job vm-mv2e1fzq-d7mqhm0b, 30 min budget)
+- [2026-10-10T12:46:33.786Z | VM 1/3] self-check PASS: shell: VERIFIED (the harness executed bash on this VM at boot); node: v24.21.0; npm: 11.19.0; python3: Python 3.12.3; git: repo checked out @ 63f42c1; filesystem: WRITABLE (the harness wrote + read back a probe file); skills: 23 knowledge docs in .newera/skills/ (list_skills / read_skill); project: 
+- [2026-10-10T12:46:34.964Z | VM 1/3] boot auto-setup: npm install --no-audit --no-fund ok
+- [2026-10-10T13:02:53.489Z | VM 1/3] VERIFIED green: npm run build
+- [2026-10-10T13:09:37.824Z | VM 1/3] DEADLINE reached at step 36 — handoff written for the next VM or an explicit resume.
